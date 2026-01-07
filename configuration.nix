@@ -13,19 +13,19 @@
 
   # File Systems
   fileSystems."/" = {
-    device = "/dev/disk/by-uuid/d95e1f66-17ed-4ef6-a138-d231db7f9e94";
+    device = "/dev/disk/by-uuid/";
     fsType = "btrfs";
     options = [ "subvol=@" "compress=zstd" "noatime" ];
   };
 
   fileSystems."/home" = {
-    device = "/dev/disk/by-uuid/d95e1f66-17ed-4ef6-a138-d231db7f9e94";
+    device = "/dev/disk/by-uuid/";
     fsType = "btrfs";
     options = [ "subvol=@home" "compress=zstd" "noatime" ];
   };
 
   fileSystems."/boot" = {
-    device = "/dev/disk/by-uuid/3FF6-D880";
+    device = "/dev/disk/by-uuid/";
     fsType = "vfat";
   };
 
@@ -123,7 +123,7 @@
   };
 
   # User Configuration
-  users.users.user = {
+  users.users.denis = {
     isNormalUser = true;
     description = "Main User";
     extraGroups = [ 
@@ -138,7 +138,7 @@
     
     shell = pkgs.bash;
     createHome = true;
-    home = "/home/user";
+    home = "/home/denis";
   };
 
   # Sudo Configuration
