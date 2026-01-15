@@ -11,26 +11,47 @@
   boot.kernelModules = [ ];
   boot.extraModulePackages = [ ];
 
-  fileSystems."/" =
-    { device = "/dev/disk/by-uuid/";
-      fsType = "btrfs";
-      options = [ "subvol=@" ];
-    };
+  # Основные субволы (обновлено с добавлением @nix, @log, @cache)
+  fileSystems."/" = {
+    device = "/dev/disk/by-uuid/твой-uuid-здесь";  # ← замени на реальный из blkid
+    fsType = "btrfs";
+    options = [ "subvol=@" "compress=zstd" "noatime" ];
+  };
 
-  fileSystems."/home" =
-    { device = "/dev/disk/by-uuid/";
-      fsType = "btrfs";
-      options = [ "subvol=@home" ];
-    };
+  fileSystems."/home" = {
+    device = "/dev/disk/by-uuid/твой-uuid-здесь";  # тот же диск
+    fsType = "btrfs";
+    options = [ "subvol=@home" "compress=zstd" "noatime" ];
+  };
 
-  fileSystems."/boot" =
-    { device = "/dev/disk/by-uuid/";
-      fsType = "vfat";
-      options = [ "fmask=0022" "dmask=0022" ];
-    };
+  fileSystems."/nix" = {
+    device = "/dev/disk/by-uuid/твой-uuid-здесь";
+    fsType = "btrfs";
+    options = [ "subvol=@nix" "compress=zstd" "noatime" ];
+  };
 
+  fileSystems."/var/log" = {
+    device = "/dev/disk/by-uuid/твой-uuid-здесь";
+    fsType = "btrfs";
+    options = [ "subvol=@log" "compress=zstd" "noatime" ];
+  };
+
+  fileSystems."/var/cache" = {
+    device = "/dev/disk/by-uuid/твой-uuid-здесь";
+    fsType = "btrfs";
+    options = [ "subvol=@cache" "compress=zstd" "noatime" ];
+  };
+
+  fileSystems."/boot" = {
+    device = "/dev/disk/by-uuid/твой-boot-uuid-здесь";
+    fsType = "vfat";
+    options = [ "fmask=0022" "dmask=0022" ];
+  };
+
+  # Swap отключён (у тебя zram в configuration.nix — это правильно для VM)
   swapDevices = [ ];
 
+  # Платформа и VirtualBox guest (оставляем как было)
   nixpkgs.hostPlatform = lib.mkDefault "x86_64-linux";
   virtualisation.virtualbox.guest.enable = true;
 }
