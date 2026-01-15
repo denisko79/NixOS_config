@@ -1,24 +1,46 @@
-### 🔧 Шаги по установке
+```bash
+# Форматирование разделов
+mkfs.vfat -F 32 -n BOOT /dev/sda1
+mkfs.btrfs -L NIXROOT /dev/sda2
 
-1. **Загрузитесь с установочного образа NixOS** (graphical или minimal).
-2. **Отформатируйте диск** (пример для UEFI):
+# Монтирование корневого раздела для создания подтомов
+mount /dev/sda2 /mnt
 
-   ```bash
-   mkfs.vfat -F 32 -n BOOT /dev/sda1
-   mkfs.btrfs -L NIXROOT /dev/sda2
-   mount /dev/sda2 /mnt
-   btrfs subvolume create /mnt/@
-   btrfs subvolume create /mnt/@home
-   umount /mnt
-   mount -o subvol=@ /dev/sda2 /mnt
-   mkdir /mnt/home
-   mount -o subvol=@home /dev/sda2 /mnt/home
-   mkdir /mnt/boot
-   mount /dev/sda1 /mnt/boot
-   ```
+# Создание Btrfs-подтомов
+btrfs subvolume create /mnt/@
+btrfs subvolume create /mnt/@home
+btrfs subvolume create /mnt/@nix
+btrfs subvolume create /mnt/@log
+btrfs subvolume create /mnt/@cache
 
-3. **Сгенерируйте `hardware-configuration.nix`**:
+# Отмонтирование перед повторным монтированием по подтомам
+umount /mnt
 
-   ```bash
-   nixos-generate-config --root /mnt
-   ```
+# Монтирование подтомов в нужные точки
+mount -o subvol=@,compress=zstd,noatime /dev/sda2 /mnt
+
+mkdir -p /mnt/{home,nix,log,cache}
+mount -o subvol=@home,compress=zstd,noatime /dev/sda2 /mnt/home
+mount -o subvol=@nix,compress=zstd,noatime /dev/sda2 /mnt/nix   # ← исправлено: было /mnt/nux
+mount -o subvol=@log,compress=zstd,noatime /dev/sda2 /mnt/log
+mount -o subvol=@cache,compress=zstd,noatime /dev/sda2 /mnt/cache
+
+# Монтирование загрузочного раздела
+mkdir -p /mnt/boot
+mount /dev/sda1 /mnt/boot
+
+# Генерация конфигурации оборудования
+nixos-generate-config --root /mnt
+
+# Получение UUID разделов (для ручной настройки configuration.nix при необходимости)
+blkid /dev/sda1
+blkid /dev/sda2
+```
+
+### Замечания:
+- Исправлена опечатка: `/mnt/nux` → `/mnt/nix`.
+- Добавлены рекомендуемые опции монтирования Btrfs: `compress=zstd,noatime` — повышают производительность и эффективность использования диска.
+- Использован `mkdir -p` для надёжности (не вызовет ошибку, если каталог уже существует).
+- После генерации `hardware-configuration.nix` убедитесь, что в нём правильно указаны `fileSystem` с нужными `subvol` и `options`.
+
+Если вы используете UEFI, убедитесь, что `/boot` — это FAT32-раздел (`/dev/sda1`), как и задумано.
