@@ -11,22 +11,48 @@
 
   system.stateVersion = "25.11";
 
-  # File Systems
+  # File Systems с добавленными субволами (@nix, @log, @cache)
+  # Замени /dev/disk/by-uuid/ на реальные UUID из blkid
   fileSystems."/" = {
-    device = "/dev/disk/by-uuid/";
+    device = "/dev/disk/by-uuid/твой-uuid";
     fsType = "btrfs";
     options = [ "subvol=@" "compress=zstd" "noatime" ];
   };
 
   fileSystems."/home" = {
-    device = "/dev/disk/by-uuid/";
+    device = "/dev/disk/by-uuid/твой-uuid";
     fsType = "btrfs";
     options = [ "subvol=@home" "compress=zstd" "noatime" ];
   };
 
+  fileSystems."/nix" = {
+    device = "/dev/disk/by-uuid/твой-uuid";
+    fsType = "btrfs";
+    options = [ "subvol=@nix" "compress=zstd" "noatime" ];
+  };
+
+  fileSystems."/var/log" = {
+    device = "/dev/disk/by-uuid/твой-uuid";
+    fsType = "btrfs";
+    options = [ "subvol=@log" "compress=zstd" "noatime" ];
+  };
+
+  fileSystems."/var/cache" = {
+    device = "/dev/disk/by-uuid/твой-uuid";
+    fsType = "btrfs";
+    options = [ "subvol=@cache" "compress=zstd" "noatime" ];
+  };
+
   fileSystems."/boot" = {
-    device = "/dev/disk/by-uuid/";
+    device = "/dev/disk/by-uuid/твой-uuid";
     fsType = "vfat";
+  };
+
+  # Btrfs autoScrub
+  services.btrfs.autoScrub = {
+    enable = true;
+    interval = "monthly";
+    fileSystems = [ "/" "/home" "/nix" "/var/log" "/var/cache" ];
   };
 
   # Boot
@@ -45,11 +71,11 @@
   boot.kernelParams = [ "quiet" "splash" ];
   boot.supportedFilesystems = [ "btrfs" ];
 
-  # ZRAM
+  # ZRAM (подняли до 75%)
   zramSwap = {
     enable = true;
     algorithm = "zstd";
-    memoryPercent = 50;
+    memoryPercent = 75;
   };
 
   # Networking
@@ -66,7 +92,7 @@
     };
   };
 
-  # OpenSSH сервер - МИНИМАЛЬНАЯ конфигурация
+  # OpenSSH сервер - МИНИМАЛЬНАЯ конфигурация (не трогаем)
   services.openssh = {
     enable = true;
     
@@ -132,6 +158,7 @@
       "audio" 
       "video" 
       "storage"
+      "input"  # Добавили для input устройств (если нужно)
     ];
     # Пароль нужно будет установить через 'passwd'
     hashedPassword = null;
@@ -154,6 +181,41 @@
     extraConfig = ''
       # Дополнительные настройки SSH клиента
     '';
+  };
+
+  # Podman (контейнеризация, альтернатива Docker)
+  virtualisation.podman = {
+    enable = true;
+    dockerCompat = true;  # Для совместимости с docker командами (podman -> docker alias)
+    defaultNetwork.settings.dns_enabled = true;  # DNS в контейнерах
+    autoPrune = {
+      enable = true;  # Авто-очистка неиспользуемых образов/контейнеров
+      dates = "weekly";
+    };
+  };
+
+  # Fonts (шрифты для терминала/консоли/приложений)
+  fonts.packages = with pkgs; [
+  noto-fonts
+  noto-fonts-cjk-sans     # основной для большинства случаев (без serif)
+  # noto-fonts-cjk-serif  # если нужен serif-вариант (редко, но можно добавить)
+  noto-fonts-emoji
+  liberation_ttf
+  font-awesome
+  (nerdfonts.override { fonts = [ "JetBrainsMono" "FiraCode" "Hack" ]; })
+];
+
+  # Подсветка синтаксиса и полезные утилиты
+  programs.bat.enable = true;  # bat - cat с подсветкой синтаксиса
+  environment.variables = {
+    BAT_THEME = "Dracula";  # Тема для bat (можно изменить)
+  };
+
+  programs.bash = {
+    shellAliases = {
+      cat = "bat";  # Заменяем cat на bat для подсветки
+      ls = "ls --color=auto";  # Цвета в ls
+    };
   };
 
   # System Packages
@@ -188,6 +250,14 @@
     # Системные утилиты
     usbutils
     pciutils
+
+    # Подсветка и шрифты
+    bat  # Для подсветки синтаксиса в терминале
+    ripgrep  # rg - быстрый grep с подсветкой
+
+    # Podman-related
+    podman-compose  # Для compose-файлов (если нужно)
+    dive  # Анализатор образов контейнеров
   ];
   
   # Дополнительные сервисы
@@ -201,5 +271,23 @@
   hardware.enableRedistributableFirmware = true;
 
   # Nix settings
-  nix.settings.auto-optimise-store = true;
+  nix.settings = {
+    auto-optimise-store = true;
+    experimental-features = [ "nix-command" "flakes" ];
+    substituters = [ "https://cache.nixos.org/" "https://nix-community.cachix.org" ];
+    trusted-public-keys = [
+      "cache.nixos.org-1:6NCHdD59X431o0gWypbMrAURkbJ16ZPMQFGspcDShjY="
+      "nix-community.cachix.org-1:mB9FSh9qf2dCimDSUo8Zy7bkq5CX+/rkCWyvRCYg3Fs="
+    ];
+  };
+
+  # Авто-очистка Nix
+  nix.gc = {
+    automatic = true;
+    dates = "weekly";
+    options = "--delete-older-than 14d";
+  };
+
+  # Логи journald
+  services.journald.extraConfig = "SystemMaxUse=300M";
 }
