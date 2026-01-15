@@ -21,7 +21,7 @@ mount -o subvol=@,compress=zstd,noatime /dev/sda2 /mnt
 
 mkdir -p /mnt/{home,nix,log,cache}
 mount -o subvol=@home,compress=zstd,noatime /dev/sda2 /mnt/home
-mount -o subvol=@nix,compress=zstd,noatime /dev/sda2 /mnt/nix   # ← исправлено: было /mnt/nux
+mount -o subvol=@nix,compress=zstd,noatime /dev/sda2 /mnt/nix   
 mount -o subvol=@log,compress=zstd,noatime /dev/sda2 /mnt/log
 mount -o subvol=@cache,compress=zstd,noatime /dev/sda2 /mnt/cache
 
@@ -32,13 +32,15 @@ mount /dev/sda1 /mnt/boot
 # Генерация конфигурации оборудования
 nixos-generate-config --root /mnt
 
+# Установка
+nixos-install
+
 # Получение UUID разделов (для ручной настройки configuration.nix при необходимости)
 blkid /dev/sda1
 blkid /dev/sda2
 ```
 
 ### Замечания:
-- Исправлена опечатка: `/mnt/nux` → `/mnt/nix`.
 - Добавлены рекомендуемые опции монтирования Btrfs: `compress=zstd,noatime` — повышают производительность и эффективность использования диска.
 - Использован `mkdir -p` для надёжности (не вызовет ошибку, если каталог уже существует).
 - После генерации `hardware-configuration.nix` убедитесь, что в нём правильно указаны `fileSystem` с нужными `subvol` и `options`.
