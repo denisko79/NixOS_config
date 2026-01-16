@@ -4,7 +4,10 @@
 
 { config, pkgs, ... }:
 
-{
+let
+  unstable = import (fetchTarball "https://github.com/NixOS/nixpkgs/archive/nixos-unstable.tar.gz") {};
+in {
+
   imports = [ 
     ./hardware-configuration.nix
   ];
@@ -14,37 +17,37 @@
   # File Systems с добавленными субволами (@nix, @log, @cache)
   # Замени /dev/disk/by-uuid/ на реальные UUID из blkid
   fileSystems."/" = {
-    device = "/dev/disk/by-uuid/твой-uuid";
+    device = "/dev/disk/by-uuid/0eb7311e-c27f-4231-adce-88edac061a3e";
     fsType = "btrfs";
     options = [ "subvol=@" "compress=zstd" "noatime" ];
   };
 
   fileSystems."/home" = {
-    device = "/dev/disk/by-uuid/твой-uuid";
+    device = "/dev/disk/by-uuid/0eb7311e-c27f-4231-adce-88edac061a3e";
     fsType = "btrfs";
     options = [ "subvol=@home" "compress=zstd" "noatime" ];
   };
 
   fileSystems."/nix" = {
-    device = "/dev/disk/by-uuid/твой-uuid";
+    device = "/dev/disk/by-uuid/0eb7311e-c27f-4231-adce-88edac061a3e";
     fsType = "btrfs";
     options = [ "subvol=@nix" "compress=zstd" "noatime" ];
   };
 
   fileSystems."/var/log" = {
-    device = "/dev/disk/by-uuid/твой-uuid";
+    device = "/dev/disk/by-uuid/0eb7311e-c27f-4231-adce-88edac061a3e";
     fsType = "btrfs";
     options = [ "subvol=@log" "compress=zstd" "noatime" ];
   };
 
   fileSystems."/var/cache" = {
-    device = "/dev/disk/by-uuid/твой-uuid";
+    device = "/dev/disk/by-uuid/0eb7311e-c27f-4231-adce-88edac061a3e";
     fsType = "btrfs";
     options = [ "subvol=@cache" "compress=zstd" "noatime" ];
   };
 
   fileSystems."/boot" = {
-    device = "/dev/disk/by-uuid/твой-uuid";
+    device = "/dev/disk/by-uuid/11E5-97FD";
     fsType = "vfat";
   };
 
@@ -86,33 +89,25 @@
     # Firewall configuration
     firewall = {
       enable = true;
-      # Разрешаем SSH
       allowedTCPPorts = [ 22 ];
       allowedUDPPorts = [ ];
     };
   };
 
-  # OpenSSH сервер - МИНИМАЛЬНАЯ конфигурация (не трогаем)
+  # OpenSSH сервер
   services.openssh = {
     enable = true;
-    
-    # Минимальные настройки для работы
     settings = {
-      # Аутентификация
       PasswordAuthentication = true;
       PubkeyAuthentication = true;
-      
-      # Безопасность
       PermitRootLogin = "no";
       PermitEmptyPasswords = false;
-      
-      # Базовые настройки
       X11Forwarding = true;
       PrintMotd = true;
     };
   };
 
-  # MOTD (Message of the Day)
+  # MOTD
   environment.etc."motd".text = ''
     Welcome to ${config.networking.hostName}!
     NixOS ${config.system.nixos.release}
@@ -148,7 +143,7 @@
     keyMap = "us";
   };
 
-  # User Configuration - МЕНЯЕМ BASH НА ZSH
+  # User Configuration
   users.users.denis = {
     isNormalUser = true;
     description = "Main User";
@@ -158,12 +153,9 @@
       "audio" 
       "video" 
       "storage"
-      "input"  # Добавили для input устройств (если нужно)
+      "input"
     ];
-    # Пароль нужно будет установить через 'passwd'
     hashedPassword = null;
-    
-    # ЗДЕСЬ МЕНЯЕМ SHELL НА ZSH
     shell = pkgs.zsh;
     createHome = true;
     home = "/home/denis";
@@ -175,27 +167,22 @@
     wheelNeedsPassword = true;
   };
 
-  # Programs - SSH агент включается здесь
+  # Programs - SSH агент
   programs.ssh = {
     startAgent = true;
     agentTimeout = "30m";
-    extraConfig = ''
-      # Дополнительные настройки SSH клиента
-    '';
   };
 
-  # Zsh с Oh-My-Zsh
+  # Zsh с Oh-My-Zsh и Powerlevel10k
   programs.zsh = {
     enable = true;
-    
-    # Автодополнение
     enableCompletion = true;
     autosuggestions.enable = true;
     syntaxHighlighting.enable = true;
     
-    # Oh-My-Zsh
     ohMyZsh = {
       enable = true;
+      theme = "powerlevel10k/powerlevel10k";
       plugins = [ 
         "git" 
         "sudo" 
@@ -205,57 +192,94 @@
         "history"
         "colored-man-pages"
         "command-not-found"
+        "z"
       ];
-      theme = "robbyrussell";  # Можно изменить на другой
-      # Другие популярные темы: "agnoster", "bureau", "avit"
     };
+    
+    shellInit = ''
+      if [[ ! -f ~/.p10k.zsh ]]; then
+        echo "Powerlevel10k config not found. Run 'p10k configure' after first login."
+      fi
+    '';
   };
 
-  # Shell aliases для zsh (можно оставить те же)
+  # Shell aliases
   environment.shellAliases = {
-    cat = "bat";  # Заменяем cat на bat для подсветки
-    ls = "ls --color=auto";  # Цвета в ls
+    cat = "bat";
+    ls = "ls --color=auto";
     ll = "ls -la";
     la = "ls -A";
     l = "ls -CF";
     grep = "grep --color=auto";
     egrep = "egrep --color=auto";
     fgrep = "fgrep --color=auto";
+    
+    # Алиасы для eza
+    lx = "eza --long --header --group --git --icons";
+    lt = "eza --tree --level=2 --icons";
+    lla = "eza --long --all --header --group --git --icons";
+    
+    # Полезные алиасы
+    nrs = "sudo nixos-rebuild switch";
+    nrb = "sudo nixos-rebuild boot";
+    ncg = "sudo nix-collect-garbage -d";
+    update = "sudo nix-channel --update && sudo nixos-rebuild switch --upgrade";
   };
 
-  # Podman (контейнеризация, альтернатива Docker)
+  # Podman
   virtualisation.podman = {
     enable = true;
-    dockerCompat = true;  # Для совместимости с docker командами (podman -> docker alias)
-    defaultNetwork.settings.dns_enabled = true;  # DNS в контейнерах
+    dockerCompat = true;
+    defaultNetwork.settings.dns_enabled = true;
     autoPrune = {
-      enable = true;  # Авто-очистка неиспользуемых образов/контейнеров
+      enable = true;
       dates = "weekly";
     };
   };
 
-  # Fonts (шрифты для терминала/консоли/приложений)
-  fonts.packages = with pkgs; [
-    noto-fonts
-    noto-fonts-cjk-sans
-    noto-fonts-color-emoji
-    liberation_ttf
-    font-awesome
+  # Fonts — исправленный и оптимизированный блок
+  fonts = {
+    packages = with pkgs; [
+      # Базовые + эмодзи + CJK
+      noto-fonts
+      noto-fonts-cjk-sans
+      noto-fonts-cjk-serif
+      noto-fonts-color-emoji
 
-    # Nerd Fonts — для тем типа Agnoster
-    nerd-fonts.jetbrains-mono
-    nerd-fonts.fira-code
-    nerd-fonts.hack
-    powerline-fonts  # Для powerline тем
-  ];
+      liberation_ttf
+      font-awesome_6
 
-  # Подсветка синтаксиса и полезные утилиты
-  programs.bat.enable = true;  # bat - cat с подсветкой синтаксиса
-  environment.variables = {
-    BAT_THEME = "Dracula";  # Тема для bat (можно изменить)
+      # Nerd Fonts — только нужные для Powerlevel10k / терминалов / иконок
+      nerd-fonts.jetbrains-mono     # основной выбор для кода и терминала
+      nerd-fonts.fira-code          # лигатуры
+      nerd-fonts.hack               # очень читаемый
+      nerd-fonts.symbols-only       # обязательно для иконок (p10k, eza, waybar и т.д.)
+    ];
+
+    fontconfig = {
+      enable = true;
+      defaultFonts = {
+        serif = [ "Noto Serif" "Noto Color Emoji" ];
+        sansSerif = [ "Noto Sans" "Noto Color Emoji" ];
+        monospace = [ "JetBrainsMono Nerd Font" "FiraCode Nerd Font" "Hack Nerd Font" "Noto Color Emoji" ];
+        emoji = [ "Noto Color Emoji" ];
+      };
+    };
   };
 
-  # System Packages - УБИРАЕМ POWERLEVEL10K
+  # Настройки переменных окружения
+  environment.variables = {
+    BAT_THEME = "Dracula";
+    EXA_COLORS = "uu=38;5;249:gu=38;5;245:sn=38;5;7:sb=38;5;7:da=38;5;245";
+  };
+
+  # Подсветка синтаксиса
+  programs.bat.enable = true;
+  
+  # Дополнительные настройки
+  programs.command-not-found.enable = true;
+
+  # System Packages
   environment.systemPackages = with pkgs; [
     # Основные утилиты
     vim
@@ -272,38 +296,51 @@
     mc
     fastfetch
     
-    # ZSH и Oh-My-Zsh
+    # ZSH окружение
     zsh
     oh-my-zsh
-    
-    # Дополнительные плагины для zsh
     zsh-autosuggestions
     zsh-syntax-highlighting
     zsh-completions
+    zsh-history-substring-search
     
-    # SSH
+    # Powerlevel10k из unstable
+    unstable.zsh-powerlevel10k
+    
+    # SSH и сеть
     openssh
-    
-    # Сетевые утилиты
     nmap
     netcat-openbsd
     
-    # Дополнительные инструменты для Git
-    git-crypt    # для шифрования секретов в репозитории
-    gh           # GitHub CLI
-    lazygit      # TUI интерфейс для Git
-
+    # Git инструменты
+    git-crypt
+    gh
+    lazygit
+    
     # Системные утилиты
     usbutils
     pciutils
-
-    # Подсветка и шрифты
-    bat  # Для подсветки синтаксиса в терминале
-    ripgrep  # rg - быстрый grep с подсветкой
-
-    # Podman-related
-    podman-compose  # Для compose-файлов (если нужно)
-    dive  # Анализатор образов контейнеров
+    lsof
+    psmisc
+    
+    # Терминальные инструменты
+    bat
+    ripgrep
+    fd
+    fzf
+    eza
+    
+    # Podman
+    podman-compose
+    dive
+    
+    # Другие полезные пакеты
+    duf
+    bottom
+    tealdeer
+    jq
+    yq
+    zoxide
   ];
   
   # Дополнительные сервисы
@@ -320,7 +357,10 @@
   nix.settings = {
     auto-optimise-store = true;
     experimental-features = [ "nix-command" "flakes" ];
-    substituters = [ "https://cache.nixos.org/" "https://nix-community.cachix.org" ];
+    substituters = [
+      "https://cache.nixos.org/"
+      "https://nix-community.cachix.org"
+    ];
     trusted-public-keys = [
       "cache.nixos.org-1:6NCHdD59X431o0gWypbMrAURkbJ16ZPMQFGspcDShjY="
       "nix-community.cachix.org-1:mB9FSh9qf2dCimDSUo8Zy7bkq5CX+/rkCWyvRCYg3Fs="
