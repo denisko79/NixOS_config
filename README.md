@@ -32,6 +32,12 @@ mount /dev/sda1 /mnt/boot
 # Генерация конфигурации оборудования
 nixos-generate-config --root /mnt
 
+# Редактирование конфигурационных файлов
+
+cd /mnt/etc/nixos
+nano configuration.nix
+nano hardware-configuration.nix
+
 # Установка
 nixos-install
 
