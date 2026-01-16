@@ -283,6 +283,7 @@ in {
   environment.systemPackages = with pkgs; [
     # Основные утилиты
     vim
+    nodejs_24
     wget
     curl
     git
