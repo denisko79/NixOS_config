@@ -148,7 +148,7 @@
     keyMap = "us";
   };
 
-  # User Configuration
+  # User Configuration - МЕНЯЕМ BASH НА ZSH
   users.users.denis = {
     isNormalUser = true;
     description = "Main User";
@@ -163,7 +163,8 @@
     # Пароль нужно будет установить через 'passwd'
     hashedPassword = null;
     
-    shell = pkgs.bash;
+    # ЗДЕСЬ МЕНЯЕМ SHELL НА ZSH
+    shell = pkgs.zsh;
     createHome = true;
     home = "/home/denis";
   };
@@ -183,6 +184,45 @@
     '';
   };
 
+  # Zsh с Oh-My-Zsh
+  programs.zsh = {
+    enable = true;
+    
+    # Автодополнение
+    enableCompletion = true;
+    autosuggestions.enable = true;
+    syntaxHighlighting.enable = true;
+    
+    # Oh-My-Zsh
+    ohMyZsh = {
+      enable = true;
+      plugins = [ 
+        "git" 
+        "sudo" 
+        "systemd" 
+        "docker" 
+        "podman"
+        "history"
+        "colored-man-pages"
+        "command-not-found"
+      ];
+      theme = "robbyrussell";  # Можно изменить на другой
+      # Другие популярные темы: "agnoster", "bureau", "avit"
+    };
+  };
+
+  # Shell aliases для zsh (можно оставить те же)
+  environment.shellAliases = {
+    cat = "bat";  # Заменяем cat на bat для подсветки
+    ls = "ls --color=auto";  # Цвета в ls
+    ll = "ls -la";
+    la = "ls -A";
+    l = "ls -CF";
+    grep = "grep --color=auto";
+    egrep = "egrep --color=auto";
+    fgrep = "fgrep --color=auto";
+  };
+
   # Podman (контейнеризация, альтернатива Docker)
   virtualisation.podman = {
     enable = true;
@@ -196,17 +236,18 @@
 
   # Fonts (шрифты для терминала/консоли/приложений)
   fonts.packages = with pkgs; [
-  noto-fonts
-  noto-fonts-cjk-sans
-  noto-fonts-color-emoji
-  liberation_ttf
-  font-awesome
+    noto-fonts
+    noto-fonts-cjk-sans
+    noto-fonts-color-emoji
+    liberation_ttf
+    font-awesome
 
-  # Nerd Fonts — новый правильный способ в 25.11
-  nerd-fonts.jetbrains-mono
-  nerd-fonts.fira-code
-  nerd-fonts.hack
-];
+    # Nerd Fonts — для тем типа Agnoster
+    nerd-fonts.jetbrains-mono
+    nerd-fonts.fira-code
+    nerd-fonts.hack
+    powerline-fonts  # Для powerline тем
+  ];
 
   # Подсветка синтаксиса и полезные утилиты
   programs.bat.enable = true;  # bat - cat с подсветкой синтаксиса
@@ -214,14 +255,7 @@
     BAT_THEME = "Dracula";  # Тема для bat (можно изменить)
   };
 
-  programs.bash = {
-    shellAliases = {
-      cat = "bat";  # Заменяем cat на bat для подсветки
-      ls = "ls --color=auto";  # Цвета в ls
-    };
-  };
-
-  # System Packages
+  # System Packages - УБИРАЕМ POWERLEVEL10K
   environment.systemPackages = with pkgs; [
     # Основные утилиты
     vim
@@ -237,6 +271,15 @@
     btrfs-progs
     mc
     fastfetch
+    
+    # ZSH и Oh-My-Zsh
+    zsh
+    oh-my-zsh
+    
+    # Дополнительные плагины для zsh
+    zsh-autosuggestions
+    zsh-syntax-highlighting
+    zsh-completions
     
     # SSH
     openssh
