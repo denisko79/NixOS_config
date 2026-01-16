@@ -17,37 +17,37 @@ in {
   # File Systems с добавленными субволами (@nix, @log, @cache)
   # Замени /dev/disk/by-uuid/ на реальные UUID из blkid
   fileSystems."/" = {
-    device = "/dev/disk/by-uuid/0eb7311e-c27f-4231-adce-88edac061a3e";
+    device = "/dev/disk/by-uuid/твой_uuid";
     fsType = "btrfs";
     options = [ "subvol=@" "compress=zstd" "noatime" ];
   };
 
   fileSystems."/home" = {
-    device = "/dev/disk/by-uuid/0eb7311e-c27f-4231-adce-88edac061a3e";
+    device = "/dev/disk/by-uuid/твой_uuid";
     fsType = "btrfs";
     options = [ "subvol=@home" "compress=zstd" "noatime" ];
   };
 
   fileSystems."/nix" = {
-    device = "/dev/disk/by-uuid/0eb7311e-c27f-4231-adce-88edac061a3e";
+    device = "/dev/disk/by-uuid/твой_uuid";
     fsType = "btrfs";
     options = [ "subvol=@nix" "compress=zstd" "noatime" ];
   };
 
   fileSystems."/var/log" = {
-    device = "/dev/disk/by-uuid/0eb7311e-c27f-4231-adce-88edac061a3e";
+    device = "/dev/disk/by-uuid/твой_uuid";
     fsType = "btrfs";
     options = [ "subvol=@log" "compress=zstd" "noatime" ];
   };
 
   fileSystems."/var/cache" = {
-    device = "/dev/disk/by-uuid/0eb7311e-c27f-4231-adce-88edac061a3e";
+    device = "/dev/disk/by-uuid/твой_uuid";
     fsType = "btrfs";
     options = [ "subvol=@cache" "compress=zstd" "noatime" ];
   };
 
   fileSystems."/boot" = {
-    device = "/dev/disk/by-uuid/11E5-97FD";
+    device = "/dev/disk/by-uuid/твой_uuid";
     fsType = "vfat";
   };
 
