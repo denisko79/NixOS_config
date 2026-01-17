@@ -198,8 +198,8 @@ in {
   # Подключаем powerlevel10k как prompt
   promptInit = ''
     # Powerlevel10k instant prompt (ускоряет запуск zsh)
-    if [[ -r "${pkgs.unstable.zsh-powerlevel10k}/share/zsh-powerlevel10k/powerlevel10k.zsh-theme" ]]; then
-      source "${pkgs.unstable.zsh-powerlevel10k}/share/zsh-powerlevel10k/powerlevel10k.zsh-theme"
+    if [[ -r "${unstable.zsh-powerlevel10k}/share/zsh-powerlevel10k/powerlevel10k.zsh-theme" ]]; then
+      source "${unstable.zsh-powerlevel10k}/share/zsh-powerlevel10k/powerlevel10k.zsh-theme"
     fi
 
     # Загружаем конфиг p10k, если он уже создан wizard'ом
