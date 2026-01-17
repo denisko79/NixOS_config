@@ -182,7 +182,6 @@ in {
 
   ohMyZsh = {
     enable = true;
-    # Убрали theme — больше не нужно!
     plugins = [
       "git"
       "sudo"
@@ -214,14 +213,7 @@ in {
     fi
   '';
 };
-    
-    shellInit = ''
-      if [[ ! -f ~/.p10k.zsh ]]; then
-        echo "Powerlevel10k config not found. Run 'p10k configure' after first login."
-      fi
-    '';
-  };
-
+ 
   # Shell aliases
   environment.shellAliases = {
     cat = "bat";
