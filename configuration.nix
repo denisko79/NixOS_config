@@ -175,26 +175,45 @@ in {
 
   # Zsh с Oh-My-Zsh и Powerlevel10k
   programs.zsh = {
+  enable = true;
+  enableCompletion = true;
+  autosuggestions.enable = true;
+  syntaxHighlighting.enable = true;
+
+  ohMyZsh = {
     enable = true;
-    enableCompletion = true;
-    autosuggestions.enable = true;
-    syntaxHighlighting.enable = true;
-    
-    ohMyZsh = {
-      enable = true;
-      theme = "powerlevel10k/powerlevel10k";
-      plugins = [ 
-        "git" 
-        "sudo" 
-        "systemd" 
-        "docker" 
-        "podman"
-        "history"
-        "colored-man-pages"
-        "command-not-found"
-        "z"
-      ];
-    };
+    # Убрали theme — больше не нужно!
+    plugins = [
+      "git"
+      "sudo"
+      "systemd"
+      "docker"
+      "podman"
+      "history"
+      "colored-man-pages"
+      "command-not-found"
+      "z"
+    ];
+  };
+
+  # Подключаем powerlevel10k как prompt
+  promptInit = ''
+    # Powerlevel10k instant prompt (ускоряет запуск zsh)
+    if [[ -r "${pkgs.unstable.zsh-powerlevel10k}/share/zsh-powerlevel10k/powerlevel10k.zsh-theme" ]]; then
+      source "${pkgs.unstable.zsh-powerlevel10k}/share/zsh-powerlevel10k/powerlevel10k.zsh-theme"
+    fi
+
+    # Загружаем конфиг p10k, если он уже создан wizard'ом
+    [[ ! -f ~/.p10k.zsh ]] || source ~/.p10k.zsh
+  '';
+
+  # Сообщение, если конфиг p10k ещё не создан (можно оставить или убрать)
+  shellInit = ''
+    if [[ ! -f ~/.p10k.zsh ]]; then
+      echo "Powerlevel10k config not found. Run 'p10k configure' once."
+    fi
+  '';
+};
     
     shellInit = ''
       if [[ ! -f ~/.p10k.zsh ]]; then
